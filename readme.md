@@ -91,5 +91,5 @@ git commit -m "."
 git push -u origin main
 
 # ORGANIZA-O-DE-COMPUTADORES
-clang++ /ULA/testbench_ula.cpp -std=c++17 -I/systemc-2.3/include -lsystemc -L/systemc-2.3/lib-macosx386 -o testbench_ula
-./testbench_ula
+clang++ ./ULA/testbench_ula.cpp -std=c++17 -I/systemc-2.3/include -lsystemc -L/systemc-2.3/lib-macosx386 -o ./ULA/testbench_ula
+./ULA/testbench_ula
