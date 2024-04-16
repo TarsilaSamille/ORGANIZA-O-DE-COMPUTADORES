@@ -1,27 +1,29 @@
 #ifndef REGISTER_BANK_H
 #define REGISTER_BANK_H
-#include "systemc.h"
 
-#include <vector>
+#include "systemc.h"
+#include <iostream>
 
 SC_MODULE(registers_bank)
 {
+    // Inputs
     sc_in<sc_uint<32>> LoadAddress1, LoadAddress2;
     sc_in<sc_uint<5>> WriteAddress;
     sc_in<sc_uint<32>> WriteData;
     sc_in<bool> RegWrite, MemWrite;
-
-    sc_out<sc_uint<32>> DataOut1, DataOut2;
-
-    sc_uint<32> RegistersBank[32];
-
     sc_in_clk clock;
 
-    // methods
+    // Outputs
+    sc_out<sc_uint<32>> DataOut1, DataOut2;
+
+    // Internal registers
+    sc_uint<32> RegistersBank[32];
+
+    // Methods
     void control();
     void memory_load();
     void memory_write();
-    void print();
+    void print_registers();
 
     SC_CTOR(registers_bank)
     {
@@ -44,21 +46,36 @@ void registers_bank::control()
 
 void registers_bank::memory_load()
 {
-    RegistersBank[WriteAddress.read()] = WriteData.read();
+    int addr = WriteAddress.read();
+    if (addr >= 0 && addr < 32)
+    {
+        RegistersBank[addr] = WriteData.read();
+    }
+    else
+    {
+        std::cerr << "Error: WriteAddress out of range" << std::endl;
+    }
 }
 
 void registers_bank::memory_write()
 {
-    DataOut1.write(RegistersBank[LoadAddress1.read().range(25, 21)]);
+    int addr = LoadAddress1.read();
+    if (addr >= 0 && addr < 32)
+    {
+        DataOut1.write(RegistersBank[addr]);
+    }
+    else
+    {
+        std::cerr << "Error: LoadAddress1 out of range" << std::endl;
+    }
 }
 
-void registers_bank::print()
+void registers_bank::print_registers()
 {
-    std::cout << "=======Registradores=======" << std::endl;
-    for (size_t i{0}; i < 32; i++)
+    std::cout << "======= Registers Bank =======\n";
+    for (size_t i = 0; i < 32; i++)
     {
-        std::cout << "[" << i << "]"
-                  << "- (" << RegistersBank[i] << ")" << std::endl;
+        std::cout << "[" << i << "] - (" << RegistersBank[i] << ")\n";
     }
     std::cout << std::endl;
 }
