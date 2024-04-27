@@ -111,7 +111,7 @@ clang++ ./Pipeline_Register/pipeline_register_testbench
 ./Pipeline_Register/pipeline_register_testbench
 
 
-clang++ ./mips_testbench.cpp -std=c++17 -I/systemc-2.3/include -I./Memory/mips_memory.h -lsystemc -L/systemc-2.3/lib-macosx386 -o ./mips_testbench
+clang++ ./mips_testbench.cpp -std=c++17 -I./Memory  -I./Pipeline_Register  -I./Instruction_Decoder  -I./Registry_Bank  -I./ULA -I/systemc-2.3/include -lsystemc -L/systemc-2.3/lib-macosx386 -o ./mips_testbench
 ./mips_testbench
 
 
