@@ -4,7 +4,7 @@
 #include "systemc.h"
 #include <iostream>
 
-SC_MODULE(registers_bank)
+SC_MODULE(Registers_Bank)
 {
     // Inputs
     sc_in<sc_uint<32>> LoadAddress1, LoadAddress2;
@@ -25,14 +25,14 @@ SC_MODULE(registers_bank)
     void memory_write();
     void print_registers();
 
-    SC_CTOR(registers_bank)
+    SC_CTOR(Registers_Bank)
     {
         SC_METHOD(control);
         sensitive << LoadAddress1 << LoadAddress2 << WriteAddress << WriteData << RegWrite << MemWrite;
     }
 };
 
-void registers_bank::control()
+void Registers_Bank::control()
 {
     if (RegWrite.read())
     {
@@ -44,7 +44,7 @@ void registers_bank::control()
     }
 }
 
-void registers_bank::memory_load()
+void Registers_Bank::memory_load()
 {
     int addr = WriteAddress.read();
     if (addr >= 0 && addr < 32)
@@ -57,7 +57,7 @@ void registers_bank::memory_load()
     }
 }
 
-void registers_bank::memory_write()
+void Registers_Bank::memory_write()
 {
     int addr = LoadAddress1.read();
     if (addr >= 0 && addr < 32)
@@ -70,7 +70,7 @@ void registers_bank::memory_write()
     }
 }
 
-void registers_bank::print_registers()
+void Registers_Bank::print_registers()
 {
     std::cout << "======= Registers Bank =======\n";
     for (size_t i = 0; i < 32; i++)

@@ -98,3 +98,20 @@ clang++ ./ULA/testbench_ula.cpp -std=c++17 -I/systemc-2.3/include -lsystemc -L/s
 clang++ ./Registry_Bank/register_bank_tests.cpp -std=c++17 -I/systemc-2.3/include -lsystemc -L/systemc-2.3/lib-macosx386 -o ./Registry_Bank/register_bank_tests
 ./Registry_Bank/register_bank_tests
 
+
+clang++ ./Memory/mips_memory_testbench.cpp -std=c++17 -I/systemc-2.3/include -lsystemc -L/systemc-2.3/lib-macosx386 -o ./Memory/mips_memory_testbench
+./Memory/mips_memory_testbench
+
+clang++ ./Instruction_Decoder/instruction_decoder_testbench.cpp -std=c++17 -I/systemc-2.3/include -lsystemc -L/systemc-2.3/lib-macosx386 -o ./Instruction_Decoder/instruction_decoder_testbench
+./Instruction_Decoder/instruction_decoder_testbench
+
+
+clang++ ./Pipeline_Register/pipeline_register_testbench
+.cpp -std=c++17 -I/systemc-2.3/include -lsystemc -L/systemc-2.3/lib-macosx386 -o ./Pipeline_Register/pipeline_register_testbench
+./Pipeline_Register/pipeline_register_testbench
+
+
+clang++ ./mips_testbench.cpp -std=c++17 -I/systemc-2.3/include -I./Memory/mips_memory.h -lsystemc -L/systemc-2.3/lib-macosx386 -o ./mips_testbench
+./mips_testbench
+
+

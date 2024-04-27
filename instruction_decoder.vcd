@@ -1,0 +1,91 @@
+$date
+     Apr 24, 2024       15:15:46
+$end
+
+$version
+ SystemC 3.0.0-Accellera --- Mar 29 2024 16:09:51
+$end
+
+$timescale
+     1 ps
+$end
+
+$scope module SystemC $end
+$var wire   32  aaaaa  instruction [31:0]  $end
+$var wire    6  aaaab  opcode [5:0]  $end
+$var wire    5  aaaac  rs [4:0]  $end
+$var wire    5  aaaad  rt [4:0]  $end
+$var wire    5  aaaae  rd [4:0]  $end
+$var wire   16  aaaaf  immediate [15:0]  $end
+$var wire   32  aaaag  jump_address [31:0]  $end
+$var wire    6  aaaah  control_signals [5:0]  $end
+$upscope $end
+$enddefinitions  $end
+
+$comment
+All initial values are dumped below at time 0 sec = 0 timescale units.
+$end
+
+$dumpvars
+b0 aaaaa
+b0 aaaab
+b0 aaaac
+b0 aaaad
+b0 aaaae
+b0 aaaaf
+b0 aaaag
+b0 aaaah
+$end
+
+#1000
+b100000100000110000000000001010 aaaaa
+b1000 aaaab
+b100 aaaac
+b11 aaaad
+b1010 aaaaf
+b10000011000000000000101000 aaaag
+b1000 aaaah
+
+#2000
+b10001100010000100000000000000000 aaaaa
+b100011 aaaab
+b10 aaaac
+b10 aaaad
+b0 aaaaf
+b1000010000000000000000000 aaaag
+b100011 aaaah
+
+#3000
+b10101100100000100000000000000000 aaaaa
+b101011 aaaab
+b100 aaaac
+b10000010000000000000000000 aaaag
+b101011 aaaah
+
+#4000
+b1000000000000000000000001010 aaaaa
+b10 aaaab
+b0 aaaac
+b0 aaaad
+b1010 aaaaf
+b101000 aaaag
+b10 aaaah
+
+#5000
+b1100000000000000000000000000 aaaaa
+b11 aaaab
+b0 aaaaf
+b0 aaaag
+b11 aaaah
+
+#6000
+b11111111111111111111111111111111 aaaaa
+b111111 aaaab
+b11111 aaaac
+b11111 aaaad
+b11111 aaaae
+b1111111111111111 aaaaf
+b1111111111111111111111111100 aaaag
+b0 aaaah
+
+#7000

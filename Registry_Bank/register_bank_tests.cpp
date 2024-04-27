@@ -4,7 +4,7 @@
 int sc_main(int argc, char *argv[])
 {
     // Instanciando módulo de banco de registradores
-    registers_bank reg_bank("RegisterBank");
+    Registers_Bank reg_bank("RegisterBank");
 
     // Definindo sinais
     sc_signal<sc_uint<32>> LoadAddress1, LoadAddress2;
