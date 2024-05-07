@@ -1,83 +1,51 @@
 #ifndef REGISTER_BANK_H
 #define REGISTER_BANK_H
 
-#include "systemc.h"
-#include <iostream>
+#include <systemc.h>
 
-SC_MODULE(Registers_Bank)
+SC_MODULE(Register_Bank)
 {
-    // Inputs
-    sc_in<sc_uint<32>> LoadAddress1, LoadAddress2;
-    sc_in<sc_uint<5>> WriteAddress;
-    sc_in<sc_uint<32>> WriteData;
-    sc_in<bool> RegWrite, MemWrite;
-    sc_in_clk clock;
+    sc_in<bool> clk;
+    sc_in<bool> reset;
+    sc_in<sc_uint<5>> read_reg1;
+    sc_in<sc_uint<5>> read_reg2;
+    sc_in<sc_uint<5>> write_reg;
+    sc_in<sc_uint<32>> write_data;
+    sc_in<bool> write_enable;
 
-    // Outputs
-    sc_out<sc_uint<32>> DataOut1, DataOut2;
+    sc_out<sc_uint<32>> read_data1;
+    sc_out<sc_uint<32>> read_data2;
 
-    // Internal registers
-    sc_uint<32> RegistersBank[32];
-
-    // Methods
-    void control();
-    void memory_load();
-    void memory_write();
-    void print_registers();
-
-    SC_CTOR(Registers_Bank)
+    SC_CTOR(Register_Bank)
     {
-        SC_METHOD(control);
-        sensitive << LoadAddress1 << LoadAddress2 << WriteAddress << WriteData << RegWrite << MemWrite;
+        SC_METHOD(register_access);
+        sensitive << clk.pos();
     }
+
+    void register_access()
+    {
+        if (reset.read())
+        {
+            // Initialize registers to 0
+            for (int i = 0; i < 32; i++)
+            {
+                registers[i] = 0;
+            }
+        }
+        else
+        {
+            if (write_enable.read())
+            {
+                registers[write_reg.read()] = write_data.read();
+            }
+
+            read_data1.write(registers[read_reg1.read()]);
+            read_data2.write(registers[read_reg2.read()]);
+        }
+    }
+
+private:
+    sc_uint<32> registers[32]; // 32 registers of 32 bits each
 };
 
-void Registers_Bank::control()
-{
-    if (RegWrite.read())
-    {
-        memory_load();
-    }
-    if (MemWrite.read())
-    {
-        memory_write();
-    }
-}
-
-void Registers_Bank::memory_load()
-{
-    int addr = WriteAddress.read();
-    if (addr >= 0 && addr < 32)
-    {
-        RegistersBank[addr] = WriteData.read();
-    }
-    else
-    {
-        std::cerr << "Error: WriteAddress out of range" << std::endl;
-    }
-}
-
-void Registers_Bank::memory_write()
-{
-    int addr = LoadAddress1.read();
-    if (addr >= 0 && addr < 32)
-    {
-        DataOut1.write(RegistersBank[addr]);
-    }
-    else
-    {
-        std::cerr << "Error: LoadAddress1 out of range" << std::endl;
-    }
-}
-
-void Registers_Bank::print_registers()
-{
-    std::cout << "======= Registers Bank =======\n";
-    for (size_t i = 0; i < 32; i++)
-    {
-        std::cout << "[" << i << "] - (" << RegistersBank[i] << ")\n";
-    }
-    std::cout << std::endl;
-}
-
-#endif
+#endif // REGISTER_BANK_H

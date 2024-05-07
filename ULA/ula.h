@@ -5,6 +5,9 @@
 
 SC_MODULE(ULA)
 {
+        // Inputs
+    sc_in<bool> clk;
+    sc_in<bool> reset;
     sc_in<sc_uint<32>> opA, opB;
     sc_in<sc_uint<4>> aluOp;
     sc_out<sc_uint<32>> result;

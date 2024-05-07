@@ -91,13 +91,12 @@ git commit -m "."
 git push -u origin main
 
 # ORGANIZA-O-DE-COMPUTADORES
+
 clang++ ./ULA/testbench_ula.cpp -std=c++17 -I/systemc-2.3/include -lsystemc -L/systemc-2.3/lib-macosx386 -o ./ULA/testbench_ula
 ./ULA/testbench_ula
 
-
 clang++ ./Registry_Bank/register_bank_tests.cpp -std=c++17 -I/systemc-2.3/include -lsystemc -L/systemc-2.3/lib-macosx386 -o ./Registry_Bank/register_bank_tests
 ./Registry_Bank/register_bank_tests
-
 
 clang++ ./Memory/mips_memory_testbench.cpp -std=c++17 -I/systemc-2.3/include -lsystemc -L/systemc-2.3/lib-macosx386 -o ./Memory/mips_memory_testbench
 ./Memory/mips_memory_testbench
@@ -105,13 +104,60 @@ clang++ ./Memory/mips_memory_testbench.cpp -std=c++17 -I/systemc-2.3/include -ls
 clang++ ./Instruction_Decoder/instruction_decoder_testbench.cpp -std=c++17 -I/systemc-2.3/include -lsystemc -L/systemc-2.3/lib-macosx386 -o ./Instruction_Decoder/instruction_decoder_testbench
 ./Instruction_Decoder/instruction_decoder_testbench
 
-
 clang++ ./Pipeline_Register/pipeline_register_testbench
 .cpp -std=c++17 -I/systemc-2.3/include -lsystemc -L/systemc-2.3/lib-macosx386 -o ./Pipeline_Register/pipeline_register_testbench
 ./Pipeline_Register/pipeline_register_testbench
 
-
-clang++ ./mips_testbench.cpp -std=c++17 -I./Memory  -I./Pipeline_Register  -I./Instruction_Decoder  -I./Registry_Bank  -I./ULA -I/systemc-2.3/include -lsystemc -L/systemc-2.3/lib-macosx386 -o ./mips_testbench
+clang++ ./mips_testbench.cpp -std=c++17 -I./Memory -I./Pipeline_Register -I./Instruction_Decoder -I./Registry_Bank -I./ULA -I/systemc-2.3/include -lsystemc -L/systemc-2.3/lib-macosx386 -o ./mips_testbench
 ./mips_testbench
 
+clang++ ./pipeline.cpp -std=c++17 -I./Memory -I./Pipeline_Register -I./Instruction_Decoder -I./Registry_Bank -I./ULA -I./Mips_Instructions -I/systemc-2.3/include -lsystemc -L/systemc-2.3/lib-macosx386 -o ./pipeline
+./pipeline
 
+clang++ ./mips_example.cpp -std=c++17 -I/systemc-2.3/include -lsystemc -L/systemc-2.3/lib-macosx386 -o ./mips_example
+./mips_example
+
+clang++ ./pipeline.cpp -std=c++17 \
+ -I./Memory \
+ -I./Pipeline_Register \
+ -I./Instruction_Decoder \
+ -I./Registry_Bank \
+ -I./ULA \
+ -I./Mips_Instructions \
+ -I/systemc-2.3/include \
+ -lsystemc -L/systemc-2.3/lib-macosx386 \
+ -o ./pipeline
+./pipeline
+
+clang++ ./pipeline.cpp -std=c++17 \
+ -I./new \
+ -I/systemc-2.3/include \
+ -lsystemc -L/systemc-2.3/lib-macosx386 \
+ -o ./pipeline
+./pipeline
+
+clang++ -c pipeline.cpp -std=c++17 -I./Memory -I./Pipeline_Register -I./Instruction_Decoder -I./Registry_Bank -I./ULA -I./Mips_Instructions -I/systemc-2.3/include
+
+clang++ ./main.cpp ./pipeline.cpp -std=c++17 \
+ -I./Memory \
+ -I./Pipeline_Register \
+ -I./Instruction_Decoder \
+ -I./Registry_Bank \
+ -I./ULA \
+ -I./Mips_Instructions \
+ -I./systemc-2.3/include \
+ -lsystemc -L./systemc-2.3/lib-macosx386 \
+ -o ./main
+./main
+
+    1. **Implement the instruction fetch stage**: In this stage, the pipeline fetches an instruction from memory and decodes it.
+
+2. **Implement the instruction decode stage**: In this stage, the pipeline decodes the instruction and extracts the opcode, registers, and immediate values.
+3. **Implement the operand fetch stage**: In this stage, the pipeline fetches the operands required for the instruction.
+4. **Implement the execution stage**: In this stage, the pipeline executes the instruction using the operands fetched earlier.
+5. **Implement the memory access stage**: In this stage, the pipeline accesses memory if required by the instruction.
+6. **Implement the write back stage**: In this stage, the pipeline writes back the results of the instruction to the register file.
+7. **Implement the pipeline control logic**: This includes implementing the logic for pipeline stalls, flushes, and forwarding.
+8. **Implement the hazard detection unit**: This unit detects hazards such as data dependencies and control dependencies.
+9. **Implement the forwarding unit**: This unit forwards the results of instructions to dependent instructions.
+10. **Implement the pipeline registers**: These registers hold the state of the pipeline at each stage.

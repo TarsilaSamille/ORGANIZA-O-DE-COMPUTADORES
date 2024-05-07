@@ -7,6 +7,8 @@
 SC_MODULE(Instruction_Decoder)
 {
     // Inputs
+    sc_in<bool> clk;
+    sc_in<bool> reset;
     sc_in<sc_uint<32>> instruction;
 
     // Outputs

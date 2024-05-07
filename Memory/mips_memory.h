@@ -6,6 +6,10 @@
 
 SC_MODULE(MIPS_Memory)
 {
+
+    // Inputs
+    sc_in<bool> clk;
+    sc_in<bool> reset;
     // Entradas
     sc_in<sc_uint<32>> address;
     sc_in<sc_uint<32>> data_in;
@@ -25,14 +29,28 @@ SC_MODULE(MIPS_Memory)
     // Método para acesso à memória
     void memory_access()
     {
+  if (reset.read())
+    {
+        // Initialize memory to 0
+        for (int i = 0; i < 1024; i++)
+        {
+            memory[i] = 0;
+        }
+    }
+    else
+    {
+        // Write to memory
         if (write_enable.read())
         {
             memory[address.read()] = data_in.read();
         }
+
+        // Read from memory
         if (read_enable.read())
         {
             data_out.write(memory[address.read()]);
         }
+    }
     }
 
 private:

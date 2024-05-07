@@ -1,46 +1,89 @@
 #include <systemc.h>
-#include "register_bank.h" // Include only the register bank module header file
+#include "ula.h"
 
 int sc_main(int argc, char *argv[])
 {
-    // Signals for Register Bank
-    sc_signal<sc_uint<32>> LoadAddress1, LoadAddress2;
-    sc_signal<sc_uint<5>> WriteAddress;
-    sc_signal<sc_uint<32>> WriteData;
-    sc_signal<bool> RegWrite, MemWrite;
-    sc_signal<sc_uint<32>> DataOut1, DataOut2;
-    sc_clock clock("clock", 1, SC_NS); // Declare clock signal
+    sc_signal<sc_uint<32>> opA, opB, result;
+    sc_signal<sc_uint<4>> aluOp;
+    sc_signal<bool> zero;
 
-    // Instantiate register bank module
-    registers_bank reg_bank("RegisterBank");
+    ULA ula("ULA");
+    ula.opA(opA);
+    ula.opB(opB);
+    ula.aluOp(aluOp);
+    ula.result(result);
+    ula.zero(zero);
 
-    // Connect Register Bank signals
-    reg_bank.LoadAddress1(LoadAddress1);
-    reg_bank.LoadAddress2(LoadAddress2);
-    reg_bank.WriteAddress(WriteAddress);
-    reg_bank.WriteData(WriteData);
-    reg_bank.RegWrite(RegWrite);
-    reg_bank.MemWrite(MemWrite);
-    reg_bank.DataOut1(DataOut1);
-    reg_bank.DataOut2(DataOut2);
-    reg_bank.clock(clock); // Connect clock signal to register bank
-
-    // Set up test cases
-    sc_start(1, SC_NS); // Start simulation to initialize signals
-
-    // Test register bank operations
-    WriteAddress = 10;
-    WriteData = 50;
-    RegWrite = true;
-    MemWrite = true;
+    // Teste de operações básicas
+    opA = 10;
+    opB = 20;
+    aluOp = 0; // ADD
     sc_start(1, SC_NS);
-    reg_bank.print_registers(); // Print registers after write operation
+    cout << "Resultado da soma (ADD): " << result.read() << ", Zero: " << zero.read() << endl;
 
-    LoadAddress1 = 10;
+    // Adicionando mais testes para outras operações
+    // SUB
+    opA = 30;
+    opB = 15;
+    aluOp = 1; // SUB
     sc_start(1, SC_NS);
-    cout << "Data read from register 10: " << DataOut1.read() << endl;
+    cout << "Resultado da subtração (SUB): " << result.read() << ", Zero: " << zero.read() << endl;
 
-    // Add more test cases as needed...
+    // AND
+    opA = 0x0F;
+    opB = 0xF0;
+    aluOp = 2; // AND
+    sc_start(1, SC_NS);
+    cout << "Resultado do AND: " << result.read() << ", Zero: " << zero.read() << endl;
+
+    // OR
+    opA = 0x0F;
+    opB = 0xF0;
+    aluOp = 3; // OR
+    sc_start(1, SC_NS);
+    cout << "Resultado do OR: " << result.read() << ", Zero: " << zero.read() << endl;
+
+    // XOR
+    opA = 0x0F;
+    opB = 0xF0;
+    aluOp = 4; // XOR
+    sc_start(1, SC_NS);
+    cout << "Resultado do XOR: " << result.read() << ", Zero: " << zero.read() << endl;
+
+    // SLL
+    opA = 2;
+    opB = 3;
+    aluOp = 5; // SLL
+    sc_start(1, SC_NS);
+    cout << "Resultado do SLL: " << result.read() << ", Zero: " << zero.read() << endl;
+
+    // SRL
+    opA = 16;
+    opB = 2;
+    aluOp = 6; // SRL
+    sc_start(1, SC_NS);
+    cout << "Resultado do SRL: " << result.read() << ", Zero: " << zero.read() << endl;
+
+    // SRA
+    opA = -16;
+    opB = 2;
+    aluOp = 7; // SRA
+    sc_start(1, SC_NS);
+    cout << "Resultado do SRA: " << result.read() << ", Zero: " << zero.read() << endl;
+
+    // MULT
+    opA = 10;
+    opB = 5;
+    aluOp = 8; // MULT
+    sc_start(1, SC_NS);
+    cout << "Resultado do MULT: " << result.read() << ", Zero: " << zero.read() << endl;
+
+    // DIV
+    opA = 20;
+    opB = 4;
+    aluOp = 9; // DIV
+    sc_start(1, SC_NS);
+    cout << "Resultado do DIV: " << result.read() << ", Zero: " << zero.read() << endl;
 
     return 0;
 }
