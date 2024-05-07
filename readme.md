@@ -162,14 +162,10 @@ clang++ ./alg.cpp ./pipeline.cpp -std=c++17 \
  -o ./alg
 ./alg
 
-    1. **Implement the instruction fetch stage**: In this stage, the pipeline fetches an instruction from memory and decodes it.
-
-2. **Implement the instruction decode stage**: In this stage, the pipeline decodes the instruction and extracts the opcode, registers, and immediate values.
-3. **Implement the operand fetch stage**: In this stage, the pipeline fetches the operands required for the instruction.
-4. **Implement the execution stage**: In this stage, the pipeline executes the instruction using the operands fetched earlier.
-5. **Implement the memory access stage**: In this stage, the pipeline accesses memory if required by the instruction.
-6. **Implement the write back stage**: In this stage, the pipeline writes back the results of the instruction to the register file.
-7. **Implement the pipeline control logic**: This includes implementing the logic for pipeline stalls, flushes, and forwarding.
-8. **Implement the hazard detection unit**: This unit detects hazards such as data dependencies and control dependencies.
-9. **Implement the forwarding unit**: This unit forwards the results of instructions to dependent instructions.
-10. **Implement the pipeline registers**: These registers hold the state of the pipeline at each stage.
+Instruction Fetch Unit (IFU): You need to implement the IFU, which fetches instructions from memory and stores them in the instruction signal. You can use a simple counter to increment the program counter (PC) and fetch the next instruction.
+Register Bank connections: You need to connect the read_reg1 and read_reg2 signals from the Register_Bank module to the opA and opB signals, respectively. This will allow the register bank to provide the operands for the ALU.
+ULA connections: You need to connect the result signal from the ULA module to the write_data signal, which will store the result of the ALU operation in the register bank.
+Memory connections: You need to connect the address signal from the Pipeline module to the address signal of the MIPS_Memory module. This will allow the pipeline to access memory.
+Hazard detection and stall logic: You need to implement the hazard detection unit and stall logic to handle data hazards and control hazards. This will involve checking for dependencies between instructions and stalling the pipeline when necessary.
+Forwarding unit: You need to implement the forwarding unit, which will forward the result of an instruction to the next instruction that uses it as an operand.
+Testbench: You need to create a testbench to verify the correctness of your pipeline simulator. This can involve writing test cases to exercise different instructions and scenarios.

@@ -7,8 +7,7 @@
 #include "register_bank.h"
 #include "ula.h"
 
-enum PipelineState
-{
+enum PipelineState {
     STATE_IF,
     STATE_ID,
     STATE_EX,
@@ -17,8 +16,15 @@ enum PipelineState
     STATE_DONE
 };
 
-SC_MODULE(Pipeline)
-{
+enum HazardType {
+    NO_HAZARD,
+    DATA_HAZARD,
+    CONTROL_HAZARD
+};
+
+
+
+SC_MODULE(Pipeline) {
     sc_in<bool> clock;
     sc_in<bool> reset;
     sc_out<PipelineState> current_state;
@@ -63,32 +69,48 @@ SC_MODULE(Pipeline)
     sc_signal<sc_uint<32>> register_bank_write_data;
     sc_signal<bool> register_bank_write_enable;
 
-    // Variáveis de controle do pipeline
-    PipelineState state;
-    bool stall;
+    // Hazard detection unit
+    sc_signal<bool> stall;
+    sc_signal<HazardType> hazard;
 
     Instruction_Decoder *decoder;
     MIPS_Memory *memory;
     Register_Bank *register_bank;
     ULA *ula;
 
-SC_CTOR(Pipeline, Instruction_Decoder *d, MIPS_Memory *m, Register_Bank *r, ULA *u) : decoder(d), memory(m), register_bank(r), ula(u)
+    SC_CTOR(Pipeline, Instruction_Decoder *d, MIPS_Memory *m, Register_Bank *r, ULA *u) : decoder(d), memory(m), register_bank(r), ula(u) {
+        SC_THREAD(transition);
+        sensitive << clock.pos();
+    }
 
-{
-    SC_THREAD(transition);
-    sensitive << clock.pos();
+    HazardType hazard_detection_unit(sc_uint<5> rs, sc_uint<5> rt, sc_uint<5> rd, sc_uint<5> write_reg) {
+    if (rs == write_reg || rt == write_reg) {
+        return DATA_HAZARD;
+    } else if (rd == write_reg) {
+        return CONTROL_HAZARD;
+    } else {
+        return NO_HAZARD;
+    }
 }
 
+// Forwarding Unit
+void forwarding_unit(sc_uint<32> &opA, sc_uint<32> &opB, sc_uint<32> write_data, sc_uint<5> rs, sc_uint<5> rt, sc_uint<5> write_reg) {
+    if (rs == write_reg) {
+        opA = write_data;
+    }
+    if (rt == write_reg) {
+        opB = write_data;
+    }
+}
 
-    // Função de transição de estado
-    void transition()
-    {
+    void transition() {
         while (true) {
             wait(); // Wait for clock edge
 
             // Transition to next state
             if (reset.read()) {
                 current_state.write(STATE_IF); // Reset to IF state
+                stall = false;
             } else {
                 switch (current_state.read()) {
                     case STATE_IF:
@@ -106,12 +128,33 @@ SC_CTOR(Pipeline, Instruction_Decoder *d, MIPS_Memory *m, Register_Bank *r, ULA 
                         immediate.write(decoder->immediate.read());
                         jump_address.write(decoder->jump_address.read());
                         control_signals.write(decoder->control_signals.read());
-                        current_state.write(STATE_EX);
+
+                        // Hazard detection
+                        hazard = hazard_detection_unit(rs.read(), rt.read(), rd.read(), write_reg.read());
+                        if (hazard == DATA_HAZARD || hazard == CONTROL_HAZARD) {
+                            stall = true;
+                        } else {
+                            current_state.write(STATE_EX);
+                        }
                         break;
                     case STATE_EX:
-                        opA.write(register_bank->read_data1.read());
-                        opB.write(register_bank->read_data2.read());
-                        aluOp.write(control_signals.read());
+                        if (stall) {
+                            // Stall in EX stage
+                        } else {
+                            opA.write(register_bank->read_data1.read());
+                            opB.write(register_bank->read_data2.read());
+                            aluOp.write(control_signals.read());
+
+                            // Forwarding
+                            if (rs.read() == write_reg.read()) {
+                                opA.write(write_data.read());
+                            }
+                            if (rt.read() == write_reg.read()) {
+                                opB.write(write_data.read());
+                            }
+
+                            current_state.write(STATE_MEM);
+                        }
                         break;
                     case STATE_MEM:
                         // Access memory
@@ -145,3 +188,5 @@ SC_CTOR(Pipeline, Instruction_Decoder *d, MIPS_Memory *m, Register_Bank *r, ULA 
 };
 
 #endif // PIPELINE_H
+
+
