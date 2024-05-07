@@ -138,7 +138,7 @@ clang++ ./pipeline.cpp -std=c++17 \
 
 clang++ -c pipeline.cpp -std=c++17 -I./Memory -I./Pipeline_Register -I./Instruction_Decoder -I./Registry_Bank -I./ULA -I./Mips_Instructions -I/systemc-2.3/include
 
-clang++ ./main.cpp ./pipeline.cpp -std=c++17 \
+clang++ ./main.cpp -std=c++17 \
  -I./Memory \
  -I./Pipeline_Register \
  -I./Instruction_Decoder \
@@ -149,6 +149,18 @@ clang++ ./main.cpp ./pipeline.cpp -std=c++17 \
  -lsystemc -L./systemc-2.3/lib-macosx386 \
  -o ./main
 ./main
+
+clang++ ./alg.cpp ./pipeline.cpp -std=c++17 \
+ -I./Memory \
+ -I./Pipeline_Register \
+ -I./Instruction_Decoder \
+ -I./Registry_Bank \
+ -I./ULA \
+ -I./Mips_Instructions \
+ -I./systemc-2.3/include \
+ -lsystemc -L./systemc-2.3/lib-macosx386 \
+ -o ./alg
+./alg
 
     1. **Implement the instruction fetch stage**: In this stage, the pipeline fetches an instruction from memory and decodes it.
 

@@ -21,7 +21,7 @@ int sc_main(int argc, char *argv[])
     sc_signal<sc_uint<32>> result;
     sc_signal<bool> zero;
 
-        sc_signal<sc_uint<32>> address;
+    sc_signal<sc_uint<32>> address;
     sc_signal<sc_uint<32>> data_in;
     sc_signal<bool> write_enable_memory;
     sc_signal<bool> read_enable;
@@ -32,9 +32,7 @@ int sc_main(int argc, char *argv[])
     sc_signal<sc_uint<5>> write_reg;
     sc_signal<sc_uint<32>> write_data;
     sc_signal<bool> write_enable;
-
-    sc_signal<sc_uint<32>> read_data1;
-    sc_signal<sc_uint<32>> read_data2;
+sc_signal<sc_uint<32>> read_data1, read_data2;
 
     // Instantiate modules
     Instruction_Decoder *decoder = new Instruction_Decoder("decoder");
@@ -63,14 +61,13 @@ int sc_main(int argc, char *argv[])
     ula->result(result);
     ula->zero(zero);
 
-        memory->clk(clock);
+    memory->clk(clock);
     memory->reset(reset);
     memory->address(address);
     memory->data_in(data_in);
     memory->write_enable(write_enable_memory);
     memory->read_enable(read_enable);
     memory->data_out(data_out);
-
 
     register_bank->clk(clock);
     register_bank->reset(reset);
@@ -79,40 +76,37 @@ int sc_main(int argc, char *argv[])
     register_bank->write_reg(write_reg);
     register_bank->write_data(write_data);
     register_bank->write_enable(write_enable);
-    register_bank->read_data1(read_data1);
-    register_bank->read_data2(read_data2);
+register_bank->read_data1(read_data1);
+register_bank->read_data2(read_data2);
+
 
     pipeline->clock(clock);
     pipeline->reset(reset);
     pipeline->current_state(current_state);
 
+    // Load instructions from file
     std::ifstream file("instructions.bin", std::ios::binary);
-if (file.is_open())
-{
-    char buffer[4];
-    while (file.read(buffer, 4))
-    {
-        sc_uint<32> instr;
-        for (int i = 0; i < 4; i++)
-        {
-            instr[i*8 + 7] = (buffer[i] >> 7) & 1;
-            instr[i*8 + 6] = (buffer[i] >> 6) & 1;
-            instr[i*8 + 5] = (buffer[i] >> 5) & 1;
-            instr[i*8 + 4] = (buffer[i] >> 4) & 1;
-            instr[i*8 + 3] = (buffer[i] >> 3) & 1;
-            instr[i*8 + 2] = (buffer[i] >> 2) & 1;
-            instr[i*8 + 1] = (buffer[i] >> 1) & 1;
-            instr[i*8 + 0] = (buffer[i] >> 0) & 1;
+    if (file.is_open()) {
+        char buffer[4];
+        while (file.read(buffer, 4)) {
+            sc_uint<32> instr;
+            for (int i = 0; i < 4; i++) {
+                instr[i*8 + 7] = (buffer[i] >> 7) & 1;
+                instr[i*8 + 6] = (buffer[i] >> 6) & 1;
+                instr[i*8 + 5] = (buffer[i] >> 5) & 1;
+                instr[i*8 + 4] = (buffer[i] >> 4) & 1;
+                instr[i*8 + 3] = (buffer[i] >> 3) & 1;
+                instr[i*8 + 2] = (buffer[i] >> 2) & 1;
+                instr[i*8 + 1] = (buffer[i] >> 1) & 1;
+                instr[i*8 + 0] = (buffer[i] >> 0) & 1;
+            }
+            instruction.write(instr);
+            sc_start(10, SC_NS);
         }
-        instruction.write(instr);
-        sc_start(10, SC_NS);
+        file.close();
+    } else {
+        std::cerr << "Error: unable to open file 'instructions.bin'" << std::endl;
     }
-    file.close();
-}
-else
-{
-    std::cerr << "Error: unable to open file 'instructions.bin'" << std::endl;
-}
 
     // Run simulation
     reset = true;
@@ -120,10 +114,8 @@ else
     reset = false;
     int num_cycles = 100; // Stop simulation after 100 cycles
     int cycle_count = 0;
-    while (true)
-    {
-        if (current_state.read() == STATE_DONE)
-        {
+    while (true) {
+        if (current_state.read() == STATE_DONE) {
             break;
         }
 
@@ -140,8 +132,7 @@ else
 
         cycle_count++;
 
-        if (cycle_count >= num_cycles || current_state.read() == STATE_DONE)
-        {
+        if (cycle_count >= num_cycles || current_state.read() == STATE_DONE) {
             break;
         }
 
