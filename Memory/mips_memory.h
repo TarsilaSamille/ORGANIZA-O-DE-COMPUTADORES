@@ -19,6 +19,8 @@ SC_MODULE(MIPS_Memory)
     // Saídas
     sc_out<sc_uint<32>> data_out;
 
+    sc_signal<bool> done;
+
     // Construtor
     SC_CTOR(MIPS_Memory)
     {
@@ -49,6 +51,7 @@ SC_MODULE(MIPS_Memory)
         if (read_enable.read())
         {
             data_out.write(memory[address.read()]);
+        done.write(true);
         }
     }
     }
