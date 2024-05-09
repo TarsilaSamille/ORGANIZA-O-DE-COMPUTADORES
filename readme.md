@@ -169,3 +169,16 @@ Memory connections: You need to connect the address signal from the Pipeline mod
 Hazard detection and stall logic: You need to implement the hazard detection unit and stall logic to handle data hazards and control hazards. This will involve checking for dependencies between instructions and stalling the pipeline when necessary.
 Forwarding unit: You need to implement the forwarding unit, which will forward the result of an instruction to the next instruction that uses it as an operand.
 Testbench: You need to create a testbench to verify the correctness of your pipeline simulator. This can involve writing test cases to exercise different instructions and scenarios.
+
+clang++ ./main.cpp -std=c++17 \
+ -I./Memory \
+ -I./Pipeline_Register \
+ -I./Instruction_Decoder \
+ -I./Registry_Bank \
+ -I./ULA \
+ -I./IFU \
+ -I./Mips_Instructions \
+ -I./systemc-2.3/include \
+ -lsystemc -L./systemc-2.3/lib-macosx386 \
+ -o ./main
+ ./main
