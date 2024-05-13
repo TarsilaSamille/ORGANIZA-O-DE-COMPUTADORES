@@ -50,7 +50,7 @@ int sc_main(int argc, char *argv[])
     // Connect signals
     decoder->clk(clock);
     decoder->reset(reset);
-    decoder->instruction(instruction);
+    // decoder->instruction(instruction);
     decoder->opcode(opcode);
     decoder->rs(rs);
     decoder->rt(rt);
@@ -90,10 +90,13 @@ int sc_main(int argc, char *argv[])
     ifu->pc(pc);
         ifu->address(address_ifu);
     ifu->read_enable(read_enable_ifu);
-ifu->instruction.bind(instruction); // Bind instruction ports
+
+ifu->instruction(instruction); 
+
     memory->address.bind(address_ifu); // Bind address ports
     memory->read_enable.bind(read_enable_ifu); // Bind read_enable ports
     ifu->data_out.bind(memory->data_out); // Bind data_out ports
+    decoder->instruction.bind(instruction);
 
 
     pipeline->clock(clock);
@@ -161,6 +164,8 @@ if (file.is_open()) {
 
         ifu->instruction.write(instr); // Assign instruction to IFU
         instruction_count++;
+        std::cout << "Instruction: " << std::hex << instr << std::endl;
+
         instruction_ready.write(false); // Reset the instruction ready signal
     }
     file.close();
@@ -172,7 +177,7 @@ if (file.is_open()) {
 reset = true;
     sc_start(10, SC_NS);
     reset = false;
-    int num_cycles = 100; // Stop simulation after 100 cycles
+    int num_cycles = 50; // Stop simulation after 100 cycles
     int cycle_count = 0;
     while (cycle_count < num_cycles) {
         sc_start(10, SC_NS); // Advance clock by 10 ns

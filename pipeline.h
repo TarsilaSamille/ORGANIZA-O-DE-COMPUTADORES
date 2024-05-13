@@ -83,17 +83,17 @@ SC_MODULE(Pipeline) {
         sensitive << clock.pos();
     }
 
-HazardType hazard_detection_unit(sc_uint<5> rs, sc_uint<5> rt, sc_uint<5> rd, sc_uint<5> write_reg) {
-    if (rs == write_reg || rt == write_reg) {
-        return DATA_HAZARD;
-    } else if (rd == write_reg) {
-        return CONTROL_HAZARD;
-    } else {
-        return NO_HAZARD;
-    }
-}
+// HazardType hazard_detection_unit(sc_uint<5> rs, sc_uint<5> rt, sc_uint<5> rd, sc_uint<5> write_reg) {
+//     if (rs == write_reg || rt == write_reg) {
+//         return DATA_HAZARD;
+//     } else if (rd == write_reg) {
+//         return CONTROL_HAZARD;
+//     } else {
+//         return NO_HAZARD;
+//     }
+// }
 
-void forwarding_unit(sc_uint<32> &opA, sc_uint<32> &opB, sc_uint<32> write_data, sc_uint<5> rs, sc_uint<5> rt, sc_uint<5> write_reg, sc_uint<32> mem_data) {
+void forwarding_unit(sc_uint<32> opA, sc_uint<32> opB, sc_uint<32> write_data, sc_uint<5> rs, sc_uint<5> rt, sc_uint<5> write_reg, sc_uint<32> mem_data) {
     if (rs == write_reg) {
         opA = write_data;
     } else if (rs == register_bank->write_reg.read()) {
@@ -110,6 +110,8 @@ void forwarding_unit(sc_uint<32> &opA, sc_uint<32> &opB, sc_uint<32> write_data,
         opB = register_bank->read_data2.read();
     }
 }
+
+
 void transition() {
     while (true) {
         wait(); // Wait for clock edge
@@ -117,15 +119,17 @@ void transition() {
         // Transition to next state
         if (reset.read()) {
             current_state.write(STATE_IF); // Reset to IF state
-            stall = false;
         } else {
             switch (current_state.read()) {
                 case STATE_IF:
+                    std::cout << "STATE_IF" << std::endl;
                     // Fetch instruction
                     instruction.write(ifu->instruction.read());
                     current_state.write(STATE_ID);
                     break;
                 case STATE_ID:
+                    std::cout << "STATE_ID" << std::endl;
+
                     // Decode instruction
                     decoder_instruction.write(instruction.read());
                     opcode.write(decoder->opcode.read());
@@ -136,35 +140,22 @@ void transition() {
                     jump_address.write(decoder->jump_address.read());
                     control_signals.write(decoder->control_signals.read());
 
-                    // Hazard detection
-                    hazard = hazard_detection_unit(rs.read(), rt.read(), rd.read(), write_reg.read());
-                    if (hazard!= NO_HAZARD) {
-                        stall = true;
-                    } else {
-                        current_state.write(STATE_EX);
-                    }
+                    current_state.write(STATE_EX);
                     break;
                 case STATE_EX:
-                    if (stall) {
-                        // Stall in EX stage
-                    } else {
-                        sc_uint<32> opA_value = opA.read();
-                        sc_uint<32> opB_value = opB.read();
-                        sc_uint<32> write_data_value = write_data.read();
-                        sc_uint<5> rs_value = rs.read();
-                        sc_uint<5> rt_value = rt.read();
-                        sc_uint<5> write_reg_value = write_reg.read();
-                        sc_uint<32> mem_data_value = memory->data_out.read();
+                    std::cout << "STATE_EX" << std::endl;
 
-                        aluOp.write(control_signals.read());
+                    // Execute instruction
+                    aluOp.write(control_signals.read());
 
-                        // Forwarding
-                        forwarding_unit(opA_value, opB_value, write_data_value, rs_value, rt_value, write_reg_value, mem_data_value);
+                    // Forwarding
+forwarding_unit(opA.read(), opB.read(), write_data, rs, rt, write_reg, memory->data_out.read());
 
-                        current_state.write(STATE_MEM);
-                    }
+                    current_state.write(STATE_MEM);
                     break;
                 case STATE_MEM:
+                    std::cout << "STATE_MEM" << std::endl;
+
                     // Access memory
                     address.write(result.read());
                     write_enable_memory.write(control_signals.read() == 0x20); // Store
@@ -177,6 +168,8 @@ void transition() {
                     current_state.write(STATE_WB);
                     break;
                 case STATE_WB:
+                    std::cout << "STATE_WB" << std::endl;
+
                     // Write back
                     write_reg.write(rd.read());
                     write_data.write(result.read());
