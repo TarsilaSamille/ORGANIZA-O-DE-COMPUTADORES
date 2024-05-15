@@ -83,109 +83,132 @@ SC_MODULE(Pipeline) {
         sensitive << clock.pos();
     }
 
-// HazardType hazard_detection_unit(sc_uint<5> rs, sc_uint<5> rt, sc_uint<5> rd, sc_uint<5> write_reg) {
-//     if (rs == write_reg || rt == write_reg) {
-//         return DATA_HAZARD;
-//     } else if (rd == write_reg) {
-//         return CONTROL_HAZARD;
-//     } else {
-//         return NO_HAZARD;
-//     }
-// }
-
-void forwarding_unit(sc_uint<32> opA, sc_uint<32> opB, sc_uint<32> write_data, sc_uint<5> rs, sc_uint<5> rt, sc_uint<5> write_reg, sc_uint<32> mem_data) {
-    if (rs == write_reg) {
-        opA = write_data;
-    } else if (rs == register_bank->write_reg.read()) {
-        opA = mem_data;
-    } else {
-        opA = register_bank->read_data1.read();
-    }
-
-    if (rt == write_reg) {
-        opB = write_data;
-    } else if (rt == register_bank->write_reg.read()) {
-        opB = mem_data;
-    } else {
-        opB = register_bank->read_data2.read();
-    }
-}
-
-
-void transition() {
-    while (true) {
-        wait(); // Wait for clock edge
-
-        // Transition to next state
-        if (reset.read()) {
-            current_state.write(STATE_IF); // Reset to IF state
+    void forwarding_unit() {
+        if (rs.read() == write_reg.read() && write_enable.read()) {
+            opA.write(write_data.read());
+        } else if (rs.read() == register_bank->write_reg.read() && register_bank->write_enable.read()) {
+            opA.write(data_out.read());
         } else {
-            switch (current_state.read()) {
-                case STATE_IF:
-                    std::cout << "STATE_IF" << std::endl;
-                    // Fetch instruction
-                    instruction.write(ifu->instruction.read());
-                    current_state.write(STATE_ID);
-                    break;
-                case STATE_ID:
-                    std::cout << "STATE_ID" << std::endl;
+            opA.write(register_bank->read_data1.read());
+        }
 
-                    // Decode instruction
-                    decoder_instruction.write(instruction.read());
-                    opcode.write(decoder->opcode.read());
-                    rs.write(decoder->rs.read());
-                    rt.write(decoder->rt.read());
-                    rd.write(decoder->rd.read());
-                    immediate.write(decoder->immediate.read());
-                    jump_address.write(decoder->jump_address.read());
-                    control_signals.write(decoder->control_signals.read());
+        if (rt.read() == write_reg.read() && write_enable.read()) {
+            opB.write(write_data.read());
+        } else if (rt.read() == register_bank->write_reg.read() && register_bank->write_enable.read()) {
+            opB.write(data_out.read());
+        } else {
+            opB.write(register_bank->read_data2.read());
+        }
+    }
 
-                    current_state.write(STATE_EX);
-                    break;
-                case STATE_EX:
-                    std::cout << "STATE_EX" << std::endl;
+    void transition() {
+        while (true) {
+            wait(); // Wait for clock edge
 
-                    // Execute instruction
-                    aluOp.write(control_signals.read());
+            if (reset.read()) {
+                current_state.write(STATE_IF); // Reset to IF state
+            } else {
+                switch (current_state.read()) {
+                    case STATE_IF:
+                        std::cout << "STATE_IF" << std::endl;
+                        // Fetch instruction
+                        instruction.write(ifu->instruction.read());
+                        // ifu->instruction_ready.write(true); // Removed because instruction_ready is not defined
+                        current_state.write(STATE_ID);
+                        break;
 
-                    // Forwarding
-forwarding_unit(opA.read(), opB.read(), write_data, rs, rt, write_reg, memory->data_out.read());
+                    case STATE_ID:
+                        std::cout << "STATE_ID" << std::endl;
 
-                    current_state.write(STATE_MEM);
-                    break;
-                case STATE_MEM:
-                    std::cout << "STATE_MEM" << std::endl;
+                        // Decode instruction
+                        decoder_instruction.write(instruction.read());
+                        opcode.write(decoder->opcode.read());
+                        rs.write(decoder->rs.read());
+                        rt.write(decoder->rt.read());
+                        rd.write(decoder->rd.read());
+                        immediate.write(decoder->immediate.read());
+                        jump_address.write(decoder->jump_address.read());
+                        control_signals.write(decoder->control_signals.read());
 
-                    // Access memory
-                    address.write(result.read());
-                    write_enable_memory.write(control_signals.read() == 0x20); // Store
-                    read_enable.write(control_signals.read() == 0x23); // Load
-                    memory_address.write(address.read());
-                    memory_data_in.write(write_data.read());
-                    memory_write_enable.write(write_enable_memory.read());
-                    memory_read_enable.write(read_enable.read());
-                    data_out.write(memory->data_out.read());
-                    current_state.write(STATE_WB);
-                    break;
-                case STATE_WB:
-                    std::cout << "STATE_WB" << std::endl;
+std::cout << "Decoded instruction:" << std::endl;
+std::cout << "Opcode: " << opcode.read() << std::endl;
+std::cout << "RS: " << rs.read() << std::endl;
+std::cout << "RT: " << rt.read() << std::endl;
+std::cout << "RD: " << rd.read() << std::endl;
+std::cout << "Immediate: " << immediate.read() << std::endl;
+std::cout << "Jump address: " << jump_address.read() << std::endl;
+std::cout << "Control signals: " << control_signals.read() << std::endl;
 
-                    // Write back
-                    write_reg.write(rd.read());
-                    write_data.write(result.read());
-                    write_enable.write(true);
-                    register_bank_write_reg.write(write_reg.read());
-                    register_bank_write_data.write(write_data.read());
-                    register_bank_write_enable.write(write_enable.read());
-                    current_state.write(STATE_IF);
-                    break;
-                default:
-                    current_state.write(STATE_IF);
-                    break;
+                        current_state.write(STATE_EX);
+                        break;
+
+                    case STATE_EX:
+                        std::cout << "STATE_EX" << std::endl;
+
+                        // Execute instruction
+                        aluOp.write(control_signals.read());
+
+                        // Forwarding
+                        forwarding_unit();
+
+                        // Write values directly to signals connected to ULA inputs
+                        ula_opA.write(opA.read());
+                        ula_opB.write(opB.read());
+                        ula_aluOp.write(aluOp.read());
+
+                        ula_result.write(ula->result.read());
+                        ula_zero.write(ula->zero.read());
+
+                        current_state.write(STATE_MEM);
+                        break;
+
+                    case STATE_MEM:
+                        std::cout << "STATE_MEM" << std::endl;
+
+                        // Access memory
+                        address.write(result.read());
+                        write_enable_memory.write(control_signals.read() == 0x20); // Store
+                        read_enable.write(control_signals.read() == 0x23); // Load
+                        memory_address.write(address.read());
+                        memory_data_in.write(write_data.read());
+                        memory_write_enable.write(write_enable_memory.read());
+                        memory_read_enable.write(read_enable.read());
+                        data_out.write(memory->data_out.read());
+
+                        current_state.write(STATE_WB);
+                        break;
+
+                    case STATE_WB:
+                        std::cout << "STATE_WB" << std::endl;
+
+                        // Write back
+                        write_reg.write(rd.read());
+                        write_data.write(result.read());
+                        write_enable.write(true);
+                        register_bank_write_reg.write(write_reg.read());
+                        register_bank_write_data.write(write_data.read());
+                        register_bank_write_enable.write(write_enable.read());
+
+                        if (ifu->instruction.read() == 0) {
+                            current_state.write(STATE_DONE);
+                        } else {
+                            current_state.write(STATE_IF);
+                        }
+                        break;
+
+                    case STATE_DONE:
+                        std::cout << "STATE_DONE" << std::endl;
+                        // Simulation complete
+                        sc_stop();
+                        break;
+
+                    default:
+                        current_state.write(STATE_IF);
+                        break;
+                }
             }
         }
     }
-}
 };
 
 #endif // PIPELINE_H

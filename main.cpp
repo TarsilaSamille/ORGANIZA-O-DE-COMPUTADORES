@@ -1,4 +1,17 @@
 #include "pipeline.h"
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+#include <queue>
+#include <bitset>
+
+// Define constants for the pipeline states (for example)
+#define STATE_IF 1
+#define STATE_ID 2
+#define STATE_EX 3
+#define STATE_MEM 4
+#define STATE_WB 0
+#define STATE_DONE 5
 
 int sc_main(int argc, char *argv[])
 {
@@ -34,9 +47,10 @@ int sc_main(int argc, char *argv[])
     sc_signal<bool> write_enable;
     sc_signal<sc_uint<32>> read_data1, read_data2;
 
-    sc_signal<sc_uint<32>> pc; 
+    sc_signal<sc_uint<32>> pc;
     sc_signal<sc_uint<32>> address_ifu;
     sc_signal<bool> read_enable_ifu;
+
     // Instantiate modules
     Instruction_Decoder *decoder = new Instruction_Decoder("decoder");
     MIPS_Memory *memory = new MIPS_Memory("memory");
@@ -45,12 +59,9 @@ int sc_main(int argc, char *argv[])
     IFU *ifu = new IFU("ifu", memory);
     Pipeline *pipeline = new Pipeline("pipeline", decoder, memory, register_bank, ula, ifu);
 
-
-
     // Connect signals
     decoder->clk(clock);
     decoder->reset(reset);
-    // decoder->instruction(instruction);
     decoder->opcode(opcode);
     decoder->rs(rs);
     decoder->rt(rt);
@@ -69,10 +80,8 @@ int sc_main(int argc, char *argv[])
 
     memory->clk(clock);
     memory->reset(reset);
-    // memory->address(address);
     memory->data_in(data_in);
     memory->write_enable(write_enable_memory);
-    // memory->read_enable(read_enable);
     memory->data_out(data_out);
 
     register_bank->clk(clock);
@@ -88,23 +97,20 @@ int sc_main(int argc, char *argv[])
     ifu->clock(clock);
     ifu->reset(reset);
     ifu->pc(pc);
-        ifu->address(address_ifu);
+    ifu->address(address_ifu);
     ifu->read_enable(read_enable_ifu);
+    ifu->instruction(instruction);
 
-ifu->instruction(instruction); 
-
-    memory->address.bind(address_ifu); // Bind address ports
-    memory->read_enable.bind(read_enable_ifu); // Bind read_enable ports
-    ifu->data_out.bind(memory->data_out); // Bind data_out ports
+    memory->address.bind(address_ifu);
+    memory->read_enable.bind(read_enable_ifu);
+    ifu->data_out.bind(memory->data_out);
     decoder->instruction.bind(instruction);
-
 
     pipeline->clock(clock);
     pipeline->reset(reset);
     pipeline->current_state(current_state);
 
-
-
+    // Tracing
     sc_trace_file *tf = sc_create_vcd_trace_file("pipeline_trace");
     sc_trace(tf, clock, "clock");
     sc_trace(tf, reset, "reset");
@@ -136,51 +142,42 @@ ifu->instruction(instruction);
     sc_trace(tf, address_ifu, "address_ifu");
     sc_trace(tf, read_enable_ifu, "read_enable_ifu");
 
-
+std::queue<sc_uint<32>> instruction_queue;
 sc_signal<bool> instruction_ready;
-instruction_ready.write(true);
+
 // Load instructions from file
 std::ifstream file("instructions.bin", std::ios::binary);
-if (file.is_open()) {
-    char buffer[4];
-    int instruction_count = 0;
-    while (file.read(buffer, 4)) {
-        sc_uint<32> instr;
-        for (int i = 0; i < 4; i++) {
-            instr[i*8 + 7] = (buffer[i] >> 7) & 1;
-            instr[i*8 + 6] = (buffer[i] >> 6) & 1;
-            instr[i*8 + 5] = (buffer[i] >> 5) & 1;
-            instr[i*8 + 4] = (buffer[i] >> 4) & 1;
-            instr[i*8 + 3] = (buffer[i] >> 3) & 1;
-            instr[i*8 + 2] = (buffer[i] >> 2) & 1;
-            instr[i*8 + 1] = (buffer[i] >> 1) & 1;
-            instr[i*8 + 0] = (buffer[i] >> 0) & 1;
-        }
-
-        // Wait for the pipeline to be ready to accept a new instruction
-        while (!instruction_ready.read()) {
-            sc_start(10, SC_NS); // Wait for 10 ns
-        }
-
-        ifu->instruction.write(instr); // Assign instruction to IFU
-        instruction_count++;
-        std::cout << "Instruction: " << std::hex << instr << std::endl;
-
-        instruction_ready.write(false); // Reset the instruction ready signal
-    }
-    file.close();
-} else {
+if (!file.is_open()) {
     std::cerr << "Error: unable to open file 'instructions.bin'" << std::endl;
+    return 1;
 }
 
-// Run simulation
-reset = true;
+char buffer[4];
+while (file.read(buffer, 4)) {
+    sc_uint<32> instr = 0;
+    for (int i = 0; i < 4; i++) {
+        instr.range((i+1)*8-1, i*8) = static_cast<unsigned char>(buffer[i]);
+    }
+
+    instruction_queue.push(instr);
+}
+
+file.close();
+    // Run simulation
+    reset = true;
     sc_start(10, SC_NS);
     reset = false;
-    int num_cycles = 50; // Stop simulation after 100 cycles
-    int cycle_count = 0;
-    while (cycle_count < num_cycles) {
-        sc_start(10, SC_NS); // Advance clock by 10 ns
+
+int num_cycles = 50;
+int instruction_count = 0;
+while (instruction_count < instruction_queue.size() && num_cycles > 0) {
+    ifu->instruction.write(instruction_queue.front());
+    instruction_queue.pop();
+    instruction_count++;
+
+    for (int cycle_count = 0; cycle_count < 5; cycle_count++) {
+        sc_start(10, SC_NS);
+
         std::cout << "Cycle " << cycle_count << ":" << std::endl;
         std::cout << "  Current State = " << current_state.read() << std::endl;
         std::cout << "  Instruction: " << ifu->instruction.read() << std::endl;
@@ -191,16 +188,28 @@ reset = true;
         std::cout << "  Immediate: " << immediate.read() << std::endl;
         std::cout << "  Jump address: " << jump_address.read() << std::endl;
         std::cout << "  Control signals: " << control_signals.read() << std::endl;
-        cycle_count++;
 
-        if (cycle_count >= num_cycles || current_state.read() == STATE_DONE) {
+// std::cout << "Initial values:" << std::endl;
+// std::cout << "ula->clk: " << ula->clk.read() << std::endl;
+// std::cout << "ula->reset: " << ula->reset.read() << std::endl;
+// std::cout << "ula->opA: " << ula->opA.read() << std::endl;
+// std::cout << "ula->opB: " << ula->opB.read() << std::endl;
+// std::cout << "ula->aluOp: " << ula->aluOp.read() << std::endl;
+// std::cout << "ula->result: " << ula->result.read() << std::endl;
+// std::cout << "ula->zero: " << ula->zero.read() << std::endl;
+
+        if (current_state.read() == STATE_DONE) {
             break;
         }
-        // Set the instruction ready signal when the pipeline is ready to accept a new instruction
-        if (current_state.read() == 1) {
+
+        if (current_state.read() == STATE_IF) {
             instruction_ready.write(true);
         }
-    }
+  }
 
+    num_cycles -= 10;
+}
+
+    sc_close_vcd_trace_file(tf);
     return 0;
 }
