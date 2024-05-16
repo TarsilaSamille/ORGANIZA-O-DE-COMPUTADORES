@@ -43,7 +43,6 @@ SC_MODULE(IFU) {
 
         // Update output signals
         pc.write(pc_reg.read());
-        instruction.write(instruction_reg.read());
     }
 };
 

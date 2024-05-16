@@ -43,6 +43,14 @@ SC_MODULE(Register_Bank)
             read_data2.write(registers[read_reg2.read()]);
         }
     }
+    void print_registers() const
+    {
+        std::cout << "Register contents:" << std::endl;
+        for (int i = 0; i < 32; ++i)
+        {
+            std::cout << "R" << i << ": " << registers[i] << std::endl;
+        }
+    }
 
 private:
     sc_uint<32> registers[32]; // 32 registers of 32 bits each
