@@ -23,7 +23,7 @@ SC_MODULE(ULA)
         // Executar operação de acordo com aluOp
         switch (aluOp.read())
         {
-        case 0: // ADD
+        case 12: // ADD
             out = a + b;
             z = (out == 0);
             break;
