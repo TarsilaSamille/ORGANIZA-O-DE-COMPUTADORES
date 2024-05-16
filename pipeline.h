@@ -140,6 +140,20 @@ SC_MODULE(Pipeline) {
         ifu->read_enable(read_enable_ifu);
         ifu->instruction(instruction);
 
+        decoder_instruction = instruction;
+        ula_opA = opA;
+        ula_opB = opB;
+        ula_aluOp = aluOp;
+        ula_result = result;
+        ula_zero = zero;
+        memory_address = address;
+        memory_data_in = data_in;
+        memory_write_enable = write_enable_memory;
+        memory_read_enable = read_enable;
+        register_bank_write_reg = write_reg;
+        register_bank_write_data = write_data;
+        register_bank_write_enable = write_enable;
+
         memory->address.bind(address_ifu);
         memory->read_enable.bind(read_enable_ifu);
         ifu->data_out.bind(memory->data_out);
@@ -200,7 +214,7 @@ void transition() {
                     aluOp.write(opcode.read());
                     forwarding_unit();
                     // ula->compute();
- 
+
                     ula_result.write(result.read());
                     ula_zero.write(zero.read()); 
 
@@ -208,7 +222,6 @@ void transition() {
                               << ", Zero: " << zero.read() << std::endl;
                     current_state.write(STATE_MEM);
                     break;
-
                 case STATE_MEM:
                     std::cout << "STATE_MEM" << std::endl;
                     // Access memory
